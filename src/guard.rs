@@ -380,7 +380,16 @@ pub fn collect_verdicts(
     let mut results = Vec::new();
     for fw_name in frameworks {
         let result = if let Some(ref bin) = guard_bin {
-            call_ousia_guard(bin, scenario, fw_name, explain)?
+            // Fall back to stub if ousia-guard exits non-zero (incompatible CLI).
+            if let Ok(r) = call_ousia_guard(bin, scenario, fw_name, explain) {
+                r
+            } else {
+                eprintln!(
+                    "note: ousia-guard failed for framework '{fw_name}' — \
+                     falling back to scenario annotations"
+                );
+                stub_verdict(scenario, fw_name)?
+            }
         } else {
             stub_verdict(scenario, fw_name)?
         };
@@ -404,6 +413,13 @@ fn call_ousia_guard(
     let output = cmd
         .output()
         .with_context(|| format!("failed to run ousia-guard for framework '{framework}'"))?;
+
+    if !output.status.success() {
+        bail!(
+            "ousia-guard exited with status {} for framework '{framework}'",
+            output.status.code().unwrap_or(-1)
+        );
+    }
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let verdict = parse_ousia_guard_output(&stdout);
