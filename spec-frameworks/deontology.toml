@@ -1,0 +1,18 @@
+[framework]
+name = "deontology"
+label = "Deontology (duty-based)"
+description = "An action is right iff it fulfills duty and instantiates a universalizable maxim"
+author = "Kantian tradition"
+philosophicalGrounding = "Kant's categorical imperative — Formula of Universal Law: act only according to that maxim by which you can at the same time will it to become a universal law; Formula of Humanity: act so that you treat humanity never merely as means but always at the same time as ends. (Groundwork for the Metaphysics of Morals; SEP: Deontological Ethics §1, Kant §5)"
+
+[[axioms]]
+kind = "subclass"
+subject = "RightAction"
+condition = "Action and (instantiatesMaxim some Maxim)"
+annotation = "An action is right iff it instantiates a universalizable maxim — Kant's Formula of Universal Law (Groundwork §421)"
+
+[[axioms]]
+kind = "subclass"
+subject = "WrongAction"
+condition = "Action and (violates some Duty)"
+annotation = "An action is wrong iff it violates a duty — the deontological side-constraint view (Kant, Nozick)"

@@ -1,11 +1,19 @@
 [package]
 name = "doxa"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 description = "Framework-neutral moral TBox — shared vocabulary for ethical reasoning"
 publish = false
+
+[[bin]]
+name = "doxa"
+path = "src/main.rs"
+
+[lib]
+name = "doxa"
+path = "src/lib.rs"
 
 [lints.rust]
 unsafe_code = "deny"
@@ -56,6 +64,7 @@ real-hardware = []
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 anyhow = "1"
+toml = "0.8"
 
 [dev-dependencies]
 proptest = "1"

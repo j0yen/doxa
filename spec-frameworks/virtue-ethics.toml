@@ -1,0 +1,18 @@
+[framework]
+name = "virtue-ethics"
+label = "Virtue Ethics (character-based)"
+description = "An action is right iff it expresses a virtue; wrong iff it fails to"
+author = "Aristotelian tradition"
+philosophicalGrounding = "Aristotle's phronimos standard: an action is right if a person of practical wisdom (phronimos) would perform it; rightness is grounded in the expression of virtue rather than in consequences or maxims. (Nicomachean Ethics II.1–6; SEP: Virtue Ethics §2)"
+
+[[axioms]]
+kind = "subclass"
+subject = "RightAction"
+condition = "Action and (expresses some Virtue)"
+annotation = "An action is right iff it expresses a virtue — the Aristotelian aretaic standard (Nicomachean Ethics II.6)"
+
+[[axioms]]
+kind = "subclass"
+subject = "WrongAction"
+condition = "Action and (not (expresses some Virtue))"
+annotation = "An action is wrong iff it fails to express any virtue — vicious or merely non-virtuous action (Aristotle)"
