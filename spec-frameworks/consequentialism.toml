@@ -1,0 +1,18 @@
+[framework]
+name = "consequentialism"
+label = "Consequentialism (outcome-maximizing)"
+description = "An action is right iff it maximizes wellbeing; wrong iff it causes net harm"
+author = "Mill/Bentham tradition"
+philosophicalGrounding = "Mill's greatest-happiness principle: actions are right in proportion as they tend to promote happiness; wrong as they tend to produce the reverse of happiness. (Utilitarianism, ch. 2; SEP: Consequentialism §1)"
+
+[[axioms]]
+kind = "subclass"
+subject = "RightAction"
+condition = "Action and (maximizes some Wellbeing)"
+annotation = "An action is right iff it maximizes Wellbeing — the defining thesis of outcome-based consequentialism (Mill)"
+
+[[axioms]]
+kind = "subclass"
+subject = "WrongAction"
+condition = "Action and (hasConsequence some Harm)"
+annotation = "An action is wrong iff its consequence includes net Harm — the flip side of the greatest-happiness principle"
