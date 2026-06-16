@@ -1,0 +1,12 @@
+{
+  "schema": "autobuilder.test_map.v1",
+  "mappings": [
+    { "ac": "AC1", "test_file": "tests/acceptance_ac1.rs", "test_fn": "acceptance_ac1_compiles" },
+    { "ac": "AC2", "test_file": "tests/acceptance_ac2.rs", "test_fn": "acceptance_ac2_build_core_graceful" },
+    { "ac": "AC3", "test_file": "tests/acceptance_ac3.rs", "test_fn": "acceptance_ac3_check_core_valid" },
+    { "ac": "AC4", "test_file": "tests/acceptance_ac4.rs", "test_fn": "acceptance_ac4_class_and_property_counts" },
+    { "ac": "AC5", "test_file": "tests/acceptance_ac5.rs", "test_fn": "acceptance_ac5_no_equivalence_axiom_in_core" },
+    { "ac": "AC6", "test_file": "tests/acceptance_ac6.rs", "test_fn": "acceptance_ac6_all_classes_have_bfo_parent_and_definition" },
+    { "ac": "AC7", "test_file": "tests/acceptance_ac7.rs", "test_fn": "acceptance_ac7_check_core_rejects_malformed_spec" }
+  ]
+}

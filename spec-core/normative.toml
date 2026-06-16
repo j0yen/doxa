@@ -1,0 +1,34 @@
+domain = "normative"
+
+# Duty — a role that generates obligations
+[[classes]]
+iri = "Duty"
+label = "Duty"
+parent = "BFO:role"
+definition = "A role that generates a normative requirement for a moral agent to perform or refrain from a certain type of action."
+[classes.annotations]
+bfoGrounding = "BFO:role"
+neutralStance = "Duties are declared as roles that generate requirements; their source (rational law, consequences, virtue) is a framework question."
+frameworkNote = "Deontology treats duties as primary; consequentialism sees duties as derivative heuristics; virtue ethics grounds them in character."
+
+# Right — a role that generates entitlements
+[[classes]]
+iri = "Right"
+label = "Right"
+parent = "BFO:role"
+definition = "A role that generates a normative entitlement — a protected claim that certain actions be performed or refrained from toward the right-holder."
+[classes.annotations]
+bfoGrounding = "BFO:role"
+neutralStance = "Rights are entitlements; their grounding (natural law, social contract, utility) is a framework question."
+frameworkNote = "Rights-based deontology treats rights as side-constraints; consequentialism may derive rights instrumentally."
+
+# Maxim — the principle of an action
+[[classes]]
+iri = "Maxim"
+label = "Maxim"
+parent = "BFO:generically_dependent_continuant"
+definition = "A generically dependent continuant that represents the principle or rule on which an agent acts in performing a given action."
+[classes.annotations]
+bfoGrounding = "BFO:generically_dependent_continuant"
+neutralStance = "Maxims are principles that can be described and evaluated; whether they must be universalizable is a framework question (central to Kantian deontology)."
+frameworkNote = "Maxims are the substrate for Kant's categorical imperative; other frameworks may employ them differently."

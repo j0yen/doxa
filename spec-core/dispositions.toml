@@ -1,0 +1,34 @@
+domain = "dispositions"
+
+# Intention — what the agent aimed at
+[[classes]]
+iri = "Intention"
+label = "Intention"
+parent = "BFO:disposition"
+definition = "A realizable disposition of a moral agent that represents what the agent aimed to bring about through a given action."
+[classes.annotations]
+bfoGrounding = "BFO:disposition"
+neutralStance = "Intentions are described as dispositions realizable in action; their moral weight is determined by framework modules (e.g. deontology weights them heavily, consequentialism weights outcomes)."
+frameworkNote = "Kantian deontology makes intention (acting from duty) central; consequentialism treats it as secondary."
+
+# Virtue — a stable character disposition valued as morally good
+[[classes]]
+iri = "Virtue"
+label = "Virtue"
+parent = "BFO:disposition"
+definition = "A stable character disposition of a moral agent that is recognized as morally praiseworthy across a relevant range of contexts."
+[classes.annotations]
+bfoGrounding = "BFO:disposition"
+neutralStance = "Virtues are dispositions recognized as positive; the criteria for virtuousness are supplied by virtue-theoretic framework modules."
+frameworkNote = "Virtue ethics makes virtues primary; consequentialism and deontology treat them as derivative."
+
+# Vice — a stable character disposition recognized as morally blameworthy
+[[classes]]
+iri = "Vice"
+label = "Vice"
+parent = "BFO:disposition"
+definition = "A stable character disposition of a moral agent that is recognized as morally blameworthy across a relevant range of contexts."
+[classes.annotations]
+bfoGrounding = "BFO:disposition"
+neutralStance = "Vices are the counterpart to virtues; criteria for blameworthiness are supplied by framework modules."
+frameworkNote = "Declared alongside Virtue to complete the dispositional polarity used in virtue-theoretic reasoning."

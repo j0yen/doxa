@@ -1,0 +1,23 @@
+domain = "qualities"
+
+# Wellbeing — a quality of a moral patient
+[[classes]]
+iri = "Wellbeing"
+label = "Wellbeing"
+parent = "BFO:quality"
+definition = "A quality of a moral patient that represents their overall state of flourishing or suffering."
+[classes.annotations]
+bfoGrounding = "BFO:quality"
+neutralStance = "Wellbeing is a descriptive quality; what constitutes wellbeing (pleasure, preference satisfaction, flourishing) is a framework decision."
+frameworkNote = "Consequentialism makes wellbeing (utility) central; virtue ethics reframes it as eudaimonia; deontology treats it as constrained by duty."
+
+# Justice — a quality of states of affairs and social arrangements
+[[classes]]
+iri = "Justice"
+label = "Justice"
+parent = "BFO:quality"
+definition = "A quality of an arrangement, distribution, or action that represents its conformity with principles of fair treatment and due entitlement."
+[classes.annotations]
+bfoGrounding = "BFO:quality"
+neutralStance = "Justice is declared as a quality without specifying whether it requires equality of outcome, opportunity, or desert — those are framework questions."
+frameworkNote = "All major frameworks recognize justice; their accounts of what justice requires differ substantially."

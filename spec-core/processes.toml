@@ -1,0 +1,67 @@
+domain = "processes"
+
+# Action — a process performed by a moral agent
+[[classes]]
+iri = "Action"
+label = "Action"
+parent = "BFO:process"
+definition = "A process that is performed by a moral agent and is subject to moral assessment."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Actions are individuated by their causal role; their moral status is determined by framework modules."
+frameworkNote = "Actions are the primary unit of moral evaluation across all major ethical theories."
+
+# Consequence — a downstream process of an Action
+[[classes]]
+iri = "Consequence"
+label = "Consequence"
+parent = "BFO:process"
+definition = "A process that is causally downstream of an Action and that may affect the wellbeing of moral patients."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Consequences are facts about the world, not evaluations; consequentialist frameworks weight them differently from deontological ones."
+frameworkNote = "Consequentialism treats consequences as morally primary; deontology constrains them; virtue ethics sees them as indicators of character."
+
+# Harm — a process that negatively affects wellbeing
+[[classes]]
+iri = "Harm"
+label = "Harm"
+parent = "BFO:process"
+definition = "A process that constitutes or causes a significant negative change in the wellbeing of a moral patient."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Harm is a descriptive category; whether harm justifies prohibition, creates duties of compensation, or expresses vice is a framework decision."
+frameworkNote = "All major ethical frameworks recognize harm as morally relevant; they differ in how it generates obligations."
+
+# RightAction — declared but undefined in core
+[[classes]]
+iri = "RightAction"
+label = "Right Action"
+parent = "Action"
+definition = "An action that is morally right. The equivalence condition is declared by framework modules, not by this core vocabulary."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Intentionally left without an equivalence axiom in core. Frameworks (consequentialist, deontological, virtue-theoretic) each supply their own EquivalentClasses axiom."
+frameworkNote = "Do not add EquivalentClasses here; doing so would bake in one framework's view."
+
+# WrongAction — declared but undefined in core
+[[classes]]
+iri = "WrongAction"
+label = "Wrong Action"
+parent = "Action"
+definition = "An action that is morally wrong. The equivalence condition is declared by framework modules, not by this core vocabulary."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Intentionally left without an equivalence axiom in core."
+frameworkNote = "Do not add EquivalentClasses here."
+
+# PermissibleAction — declared but undefined in core
+[[classes]]
+iri = "PermissibleAction"
+label = "Permissible Action"
+parent = "Action"
+definition = "An action that is morally permissible. The equivalence condition is declared by framework modules, not by this core vocabulary."
+[classes.annotations]
+bfoGrounding = "BFO:process"
+neutralStance = "Intentionally left without an equivalence axiom in core."
+frameworkNote = "Do not add EquivalentClasses here."

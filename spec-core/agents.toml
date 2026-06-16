@@ -1,0 +1,23 @@
+domain = "agents"
+
+# MoralAgent — entity capable of moral action
+[[classes]]
+iri = "MoralAgent"
+label = "Moral Agent"
+parent = "BFO:role"
+definition = "A role borne by an entity that is capable of performing morally assessable actions, including forming intentions and acting on reasons."
+[classes.annotations]
+bfoGrounding = "BFO:role"
+neutralStance = "Capability for moral action is declared without presupposing which theory determines when action is obligatory or permissible."
+frameworkNote = "Consequentialism, deontology, and virtue ethics all employ a notion of moral agency; this class is the shared referent."
+
+# MoralPatient — entity that can be benefited or harmed
+[[classes]]
+iri = "MoralPatient"
+label = "Moral Patient"
+parent = "BFO:role"
+definition = "A role borne by an entity whose wellbeing or interests can be affected by the actions of a moral agent."
+[classes.annotations]
+bfoGrounding = "BFO:role"
+neutralStance = "Patienthood is the capacity to be benefited or harmed; the criteria for patienthood are not fixed by this core vocabulary."
+frameworkNote = "All major frameworks recognize moral patients; their criteria for who counts differ."

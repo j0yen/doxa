@@ -1,0 +1,115 @@
+{
+  "schema": "autobuilder.intent_card.v1",
+  "prd_source": "/home/jsy/wintermute/autobuilder/PRD-doxa-moral-core.md",
+  "intent_slug": "doxa-moral-core",
+  "root_motivation": "To compare ethical philosophies deductively, they must reason over the same shared vocabulary. No framework-neutral moral TBox currently exists that a consequentialist, deontologist, and virtue ethicist can all range over. Without it, 'compare two philosophies' is not even expressible. This PRD ships the shared vocabulary — a BFO-grounded, framework-neutral moral-domain TBox compiled to OWL 2 DL — as the foundation every subsequent doxa framework module will build on.",
+  "user_persona": "Joe Yen, running doxa on a Linux laptop as part of the wintermute ecosystem. Builds moral reasoning infrastructure for AI systems; needs the shared vocabulary before any framework module can be written.",
+  "unfakeable_metric": {
+    "name": "acceptance_tests_passing_count",
+    "lower_is_better": false,
+    "harness_command": "scripts/run-metrics.sh",
+    "target": 7
+  },
+  "acceptance_criteria": [
+    {
+      "id": "AC1",
+      "level": "MUST",
+      "description": "cargo test --release passes; cargo clippy -- -D warnings passes in ~/wintermute/doxa.",
+      "test": "tests/acceptance_ac1.rs + CI clippy gate"
+    },
+    {
+      "id": "AC2",
+      "level": "MUST",
+      "description": "doxa build-core --out /tmp/core.owl exits 0 and writes a non-empty OWL file (when ousia-forge is on $PATH; skip with logged note if absent).",
+      "test": "tests/acceptance_ac2.rs"
+    },
+    {
+      "id": "AC3",
+      "level": "MUST",
+      "description": "ousia-forge check --spec spec-core/ (or doxa check-core) reports the spec valid.",
+      "test": "tests/acceptance_ac3.rs"
+    },
+    {
+      "id": "AC4",
+      "level": "MUST",
+      "description": "The built core ontology contains ≥12 moral-domain classes and ≥8 object properties.",
+      "test": "tests/acceptance_ac4.rs"
+    },
+    {
+      "id": "AC5",
+      "level": "MUST",
+      "description": "RightAction, WrongAction, PermissibleAction are declared as subclasses of Action but carry no equivalence/definition axiom in core.",
+      "test": "tests/acceptance_ac5.rs"
+    },
+    {
+      "id": "AC6",
+      "level": "MUST",
+      "description": "Every core class has a BFO parent IRI and a non-empty definition annotation.",
+      "test": "tests/acceptance_ac6.rs"
+    },
+    {
+      "id": "AC7",
+      "level": "MUST",
+      "description": "doxa check-core exits non-zero on a deliberately malformed spec fixture.",
+      "test": "tests/acceptance_ac7.rs"
+    }
+  ],
+  "scope": [
+    "A Rust CLI binary `doxa` with `build-core` and `check-core` subcommands",
+    "A spec-core/ TOML spec in ousia-forge format declaring ≥12 framework-neutral moral-domain classes and ≥8 object properties",
+    "All core classes grounded to BFO parents with non-empty definitions",
+    "RightAction/WrongAction/PermissibleAction declared as subclasses of Action, left undefined in core"
+  ],
+  "non_goals": [
+    "No framework modules (consequentialist, deontological, virtue-theoretic) — those are the next PRD",
+    "No SPARQL query interface",
+    "No OWL reasoner invocation",
+    "No GUI",
+    "No network-accessible API",
+    "No modification of the ousia-forge binary itself"
+  ],
+  "hard_constraints": {
+    "rust_edition": "2021",
+    "target_kind": "cli",
+    "deny_unsafe": true,
+    "max_deps": null,
+    "msrv": "1.85",
+    "additional": {
+      "ousia_forge_integration": "shells out to ousia-forge binary; does not link it as a library"
+    }
+  },
+  "five_whys_trace": [
+    {
+      "why": 1,
+      "q": "Why build a framework-neutral moral TBox?",
+      "a": "To make ethical frameworks commensurable: a consequentialist and a deontologist reasoning over the same vocabulary can disagree deductively rather than just terminologically."
+    },
+    {
+      "why": 2,
+      "q": "Why must they share the same vocabulary?",
+      "a": "Without shared vocabulary, 'compare two philosophies' is not expressible — you'd be comparing two unrelated ontologies with no common referents."
+    },
+    {
+      "why": 3,
+      "q": "Why use OWL 2 DL specifically?",
+      "a": "OWL 2 DL provides a decidable description logic with sound, complete reasoners — deductive comparison is then a formal query, not a vague approximation."
+    },
+    {
+      "why": 4,
+      "q": "Why ground it to BFO?",
+      "a": "BFO provides an upper ontology with stable, well-studied categories (process, role, disposition, quality) that moral concepts naturally fall under — giving the TBox an external anchor that isn't itself the product of any one ethical theory."
+    },
+    {
+      "why": 5,
+      "q": "Why ship the TBox before the framework modules?",
+      "a": "The framework modules (consequentialism, deontology, virtue ethics) will each add axioms over this shared vocabulary. Without the vocabulary first, the framework modules have nothing to reference — dependencies must be built before their dependents."
+    }
+  ],
+  "ambiguities_resolved": [
+    {
+      "question": "Should ousia-forge be a hard dependency (fail if absent) or soft (skip with note)?",
+      "resolution": "Soft for build-core (exit 0 with logged note if absent — enables cargo test on machines without ousia-forge); hard for check-core (exit non-zero if forge absent, because check-core's purpose IS validation)."
+    }
+  ],
+  "created_at": "2026-06-16T00:00:00Z"
+}

@@ -1,0 +1,76 @@
+# doxa moral-core — framework-neutral moral TBox
+# Compiled from this spec by: ousia-forge build --spec spec-core/ --out core.owl
+#
+# Design principles:
+#   1. Declare WHAT an action HAS (consequence, intention, maxim, …).
+#   2. Never declare WHAT MAKES it right — that is each framework module's job.
+#   3. Every class is grounded to a BFO parent.
+#   4. RightAction / WrongAction / PermissibleAction are declared but LEFT
+#      UNDEFINED — frameworks supply equivalence axioms in their own spec dirs.
+
+iri = "https://w3id.org/doxa/moral-core"
+version_iri = "https://w3id.org/doxa/moral-core/0.1.0"
+imports = ["http://purl.obolibrary.org/obo/bfo/2020/bfo.owl"]
+
+# Custom annotation properties
+[[annotation_properties]]
+iri = "https://w3id.org/doxa/neutralStance"
+label = "neutral stance"
+
+[[annotation_properties]]
+iri = "https://w3id.org/doxa/bfoGrounding"
+label = "BFO grounding"
+
+[[annotation_properties]]
+iri = "https://w3id.org/doxa/frameworkNote"
+label = "framework note"
+
+# --- Object properties ---
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/hasConsequence"
+label = "has consequence"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Consequence"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/hasIntention"
+label = "has intention"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Intention"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/actsUpon"
+label = "acts upon"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/MoralPatient"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/performedBy"
+label = "performed by"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/MoralAgent"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/expresses"
+label = "expresses"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Virtue"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/violates"
+label = "violates"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Duty"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/maximizes"
+label = "maximizes"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Wellbeing"
+
+[[object_properties]]
+iri = "https://w3id.org/doxa/instantiatesMaxim"
+label = "instantiates maxim"
+domain = "https://w3id.org/doxa/Action"
+range = "https://w3id.org/doxa/Maxim"
