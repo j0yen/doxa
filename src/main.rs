@@ -1,16 +1,20 @@
-//! doxa — framework-neutral moral `TBox` compiler.
+//! doxa — framework-neutral moral `TBox` compiler and pluralist action guard.
 //!
 //! Compiles and validates the `spec-core/` TOML spec (in `ousia-forge` format)
 //! to OWL 2 DL. Framework modules add axioms over this shared vocabulary to
 //! make ethical frameworks commensurable.
 //!
-//! The `compare` subcommand (doxa-compare PRD) fans out N frameworks on one
-//! scenario and emits an agreement/conflict matrix.
+//! The `compare` subcommand fans out N frameworks on one scenario and emits an
+//! agreement/conflict matrix.
+//!
+//! The `guard` subcommand aggregates per-framework moral verdicts into a single
+//! `allow | flag | deny` under an explicit, user-chosen aggregation policy.
 
 #![allow(clippy::print_stderr)] // CLI intentionally writes status to stderr
-#![allow(clippy::print_stdout)] // `doxa list` / `doxa compare` print to stdout
+#![allow(clippy::print_stdout)] // `doxa list` / `doxa compare` / `doxa guard` print to stdout
 
 pub mod compare;
+pub mod guard;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -107,6 +111,31 @@ enum Commands {
         /// Output format.
         #[arg(long, default_value = "text", value_parser = ["text", "json"])]
         format: String,
+    },
+    /// Gate an action under an explicit pluralist aggregation policy.
+    ///
+    /// Aggregates per-framework moral verdicts into `allow | flag | deny`.
+    /// Exit codes: allow=0, flag=10, deny=20.
+    Guard {
+        /// Path to the scenario ABox (e.g. `scenarios/trolley.ttl`).
+        #[arg(long)]
+        scenario: PathBuf,
+
+        /// Aggregation policy: unanimity | majority | framework:<name> | lexical:<a,b,...>
+        #[arg(long)]
+        policy: String,
+
+        /// Comma-separated list of frameworks to evaluate (default: all built-in).
+        #[arg(long, value_delimiter = ',')]
+        frameworks: Option<Vec<String>>,
+
+        /// Path to `ousia-guard` binary (default: resolve from `$PATH`).
+        #[arg(long)]
+        ousia_guard: Option<PathBuf>,
+
+        /// Include per-framework axiom chains in the output.
+        #[arg(long, default_value_t = false)]
+        explain: bool,
     },
 }
 
@@ -374,9 +403,28 @@ fn cmd_compare(
     Ok(())
 }
 
+fn cmd_guard(
+    scenario: PathBuf,
+    policy: String,
+    frameworks: Option<Vec<String>>,
+    ousia_guard: Option<PathBuf>,
+    explain: bool,
+) -> Result<guard::Verdict> {
+    let args = guard::GuardArgs {
+        scenario,
+        policy,
+        frameworks,
+        ousia_guard,
+        explain,
+    };
+    let result = guard::run_guard(args)?;
+    print!("{}", result.display(explain));
+    Ok(result.verdict)
+}
+
 fn main() -> std::process::ExitCode {
     let cli = Cli::parse();
-    let result = match cli.command {
+    let result: Result<()> = match cli.command {
         Commands::BuildCore { out, spec } => cmd_build_core(cli.forge, &out, &spec),
         Commands::CheckCore { spec } => cmd_check_core(cli.forge, &spec),
         Commands::List { format, frameworks } => cmd_list(&frameworks, format),
@@ -392,6 +440,20 @@ fn main() -> std::process::ExitCode {
             scenario,
             format,
         } => cmd_compare(cli.reason.as_ref(), &frameworks, scenario.as_ref(), &format),
+        Commands::Guard {
+            scenario,
+            policy,
+            frameworks,
+            ousia_guard,
+            explain,
+        } => {
+            match cmd_guard(scenario, policy, frameworks, ousia_guard, explain) {
+                Ok(verdict) => {
+                    return std::process::ExitCode::from(verdict.exit_code());
+                }
+                Err(e) => Err(e),
+            }
+        }
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,

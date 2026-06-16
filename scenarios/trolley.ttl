@@ -1,0 +1,44 @@
+# Trolley problem scenario ABox — doxa-guard test fixture
+#
+# Per-framework verdicts embedded for offline stub mode (ousia-guard absent):
+#   consequentialism = permissible (utilitarian calculus: fewer deaths)
+#   deontology       = wrong       (using person as means; Kantian constraint)
+#   virtue-ethics    = undetermined (reasonable virtuous agent disagrees here)
+#   contractualism   = wrong       (cannot be justified to the one on the track)
+#
+# doxa-verdict: consequentialism=permissible
+# doxa-verdict: deontology=wrong
+# doxa-verdict: virtue-ethics=undetermined
+# doxa-verdict: contractualism=wrong
+
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix doxa: <https://wintermute.jyen.tech/doxa#> .
+
+<https://wintermute.jyen.tech/scenarios/trolley>
+    a owl:Ontology ;
+    rdfs:label "Trolley problem ABox" ;
+    rdfs:comment "A runaway trolley will kill five people. You can pull a lever to divert it to a side track where it will kill one person." .
+
+doxa:TrolleyScenario
+    a doxa:ActionScenario ;
+    doxa:agent doxa:TheAgent ;
+    doxa:possibleAction doxa:PullLever ;
+    doxa:possibleAction doxa:DoNothing .
+
+doxa:PullLever
+    a doxa:Action ;
+    rdfs:label "Pull the lever" ;
+    doxa:consequence doxa:OneDeath ;
+    doxa:consequence doxa:FivesSaved .
+
+doxa:DoNothing
+    a doxa:Action ;
+    rdfs:label "Do nothing" ;
+    doxa:consequence doxa:FiveDeaths .
+
+doxa:OneDeath  a doxa:Consequence ; rdfs:label "One person dies on side track" .
+doxa:FiveDeaths a doxa:Consequence ; rdfs:label "Five people die on main track" .
+doxa:FivesSaved a doxa:Consequence ; rdfs:label "Five people are saved" .
