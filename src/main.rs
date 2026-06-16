@@ -15,6 +15,7 @@
 
 pub mod compare;
 pub mod guard;
+pub mod reason;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -112,12 +113,34 @@ enum Commands {
         #[arg(long, default_value = "text", value_parser = ["text", "json"])]
         format: String,
     },
+    /// Evaluate a scenario `ABox` under a single chosen framework.
+    ///
+    /// Shells out to `ousia-reason classify` to materialise OWL entailments,
+    /// then reports whether the action is `RightAction` / `WrongAction` /
+    /// `PermissibleAction` / undetermined under that framework.
+    Reason {
+        /// Framework name (e.g. `consequentialism`, `deontology`).
+        framework: String,
+
+        /// Path to the scenario `ABox` (`.ttl` file).
+        #[arg(long)]
+        scenario: PathBuf,
+
+        /// Print the axiom justification chain for a decided verdict.
+        #[arg(long, default_value_t = false)]
+        explain: bool,
+
+        /// Explicit path to the framework OWL file.
+        /// Defaults to `<framework>.owl` in the current directory.
+        #[arg(long)]
+        framework_owl: Option<PathBuf>,
+    },
     /// Gate an action under an explicit pluralist aggregation policy.
     ///
     /// Aggregates per-framework moral verdicts into `allow | flag | deny`.
     /// Exit codes: allow=0, flag=10, deny=20.
     Guard {
-        /// Path to the scenario ABox (e.g. `scenarios/trolley.ttl`).
+        /// Path to the scenario `ABox` (e.g. `scenarios/trolley.ttl`).
         #[arg(long)]
         scenario: PathBuf,
 
@@ -403,6 +426,29 @@ fn cmd_compare(
     Ok(())
 }
 
+fn cmd_reason(
+    ousia_reason_flag: Option<PathBuf>,
+    framework: String,
+    scenario: PathBuf,
+    explain: bool,
+    framework_owl: Option<PathBuf>,
+) -> Result<()> {
+    let args = reason::ReasonArgs {
+        framework,
+        scenario,
+        explain,
+        ousia_reason: ousia_reason_flag,
+        framework_owl,
+    };
+    let result = reason::run_reason(args)?;
+    println!("{}", result.summary_line());
+    if let Some(ref chain) = result.explanation {
+        println!();
+        println!("{chain}");
+    }
+    Ok(())
+}
+
 fn cmd_guard(
     scenario: PathBuf,
     policy: String,
@@ -440,6 +486,12 @@ fn main() -> std::process::ExitCode {
             scenario,
             format,
         } => cmd_compare(cli.reason.as_ref(), &frameworks, scenario.as_ref(), &format),
+        Commands::Reason {
+            framework,
+            scenario,
+            explain,
+            framework_owl,
+        } => cmd_reason(cli.reason, framework, scenario, explain, framework_owl),
         Commands::Guard {
             scenario,
             policy,

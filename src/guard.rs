@@ -17,15 +17,18 @@ use anyhow::{anyhow, bail, Context, Result};
 /// Three-valued guard verdict.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verdict {
+    /// Action is permitted — exit code 0.
     Allow,
+    /// Action requires review — exit code 10.
     Flag,
+    /// Action is prohibited — exit code 20.
     Deny,
 }
 
 impl Verdict {
     /// POSIX exit code: allow→0, flag→10, deny→20.
     #[must_use]
-    pub fn exit_code(self) -> u8 {
+    pub const fn exit_code(self) -> u8 {
         match self {
             Self::Allow => 0,
             Self::Flag => 10,
@@ -47,7 +50,7 @@ impl fmt::Display for Verdict {
 // ── Per-framework raw verdict ──────────────────────────────────────────────────
 
 /// A framework's raw moral verdict (OWL class membership).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrameworkVerdict {
     /// `RightAction` or `PermissibleAction` — maps to `allow`.
     Permissible,
@@ -60,7 +63,7 @@ pub enum FrameworkVerdict {
 impl FrameworkVerdict {
     /// Map framework verdict → guard triad (None = undetermined).
     #[must_use]
-    pub fn to_guard(self) -> Option<Verdict> {
+    pub const fn to_guard(self) -> Option<Verdict> {
         match self {
             Self::Permissible => Some(Verdict::Allow),
             Self::Wrong => Some(Verdict::Deny),
@@ -69,6 +72,7 @@ impl FrameworkVerdict {
     }
 
     /// Parse from string (case-insensitive).
+    #[must_use]
     pub fn parse(s: &str) -> Self {
         match s.to_ascii_lowercase().trim() {
             "rightaction" | "permissibleaction" | "permissible" | "allow" => Self::Permissible,
@@ -123,7 +127,7 @@ impl Policy {
         }
         if let Some(list) = s.strip_prefix("lexical:") {
             let names: Vec<String> = list.split(',').map(|n| n.trim().to_string()).collect();
-            if names.is_empty() || names.iter().any(|n| n.is_empty()) {
+            if names.is_empty() || names.iter().any(String::is_empty) {
                 bail!("lexical policy must list at least one non-empty framework name");
             }
             return Ok(Self::Lexical(names));
@@ -151,7 +155,9 @@ impl Policy {
 /// One framework's verdict plus optional axiom chain.
 #[derive(Debug, Clone)]
 pub struct FrameworkResult {
+    /// Framework name (e.g. `"consequentialism"`).
     pub name: String,
+    /// Moral verdict under this framework.
     pub verdict: FrameworkVerdict,
     /// Axiom chain from `ousia-guard --explain`, if requested.
     pub axiom_chain: Option<String>,
@@ -162,8 +168,11 @@ pub struct FrameworkResult {
 /// Full guard result: policy, per-framework breakdown, aggregate verdict, dissenters.
 #[derive(Debug)]
 pub struct GuardResult {
+    /// Aggregation policy used.
     pub policy: Policy,
+    /// Per-framework verdict breakdown.
     pub frameworks: Vec<FrameworkResult>,
+    /// Aggregate guard verdict.
     pub verdict: Verdict,
     /// Names of frameworks that disagreed with the aggregate verdict.
     pub dissenters: Vec<String>,
@@ -208,14 +217,14 @@ pub fn aggregate(
     policy: &Policy,
 ) -> Result<(Verdict, Vec<String>)> {
     match policy {
-        Policy::Unanimity => aggregate_unanimity(results),
+        Policy::Unanimity => Ok(aggregate_unanimity(results)),
         Policy::Majority => Ok(aggregate_majority(results)),
         Policy::Framework(name) => aggregate_single_framework(results, name),
         Policy::Lexical(names) => aggregate_lexical(results, names),
     }
 }
 
-fn aggregate_unanimity(results: &[FrameworkResult]) -> Result<(Verdict, Vec<String>)> {
+fn aggregate_unanimity(results: &[FrameworkResult]) -> (Verdict, Vec<String>) {
     let decided: Vec<&FrameworkResult> = results
         .iter()
         .filter(|r| r.verdict != FrameworkVerdict::Undetermined)
@@ -223,7 +232,7 @@ fn aggregate_unanimity(results: &[FrameworkResult]) -> Result<(Verdict, Vec<Stri
 
     if decided.is_empty() {
         // No framework decided → flag (cautious)
-        return Ok((Verdict::Flag, vec![]));
+        return (Verdict::Flag, vec![]);
     }
 
     let any_deny = decided.iter().any(|r| r.verdict == FrameworkVerdict::Wrong);
@@ -242,7 +251,7 @@ fn aggregate_unanimity(results: &[FrameworkResult]) -> Result<(Verdict, Vec<Stri
     };
 
     let dissenters = compute_dissenters(results, verdict);
-    Ok((verdict, dissenters))
+    (verdict, dissenters)
 }
 
 fn aggregate_majority(results: &[FrameworkResult]) -> (Verdict, Vec<String>) {
@@ -264,13 +273,10 @@ fn aggregate_majority(results: &[FrameworkResult]) -> (Verdict, Vec<String>) {
         .filter(|r| r.verdict == FrameworkVerdict::Wrong)
         .count();
 
-    let verdict = if allow_count > deny_count {
-        Verdict::Allow
-    } else if deny_count > allow_count {
-        Verdict::Deny
-    } else {
-        // Tie
-        Verdict::Flag
+    let verdict = match allow_count.cmp(&deny_count) {
+        std::cmp::Ordering::Greater => Verdict::Allow,
+        std::cmp::Ordering::Less => Verdict::Deny,
+        std::cmp::Ordering::Equal => Verdict::Flag, // Tie
     };
 
     let dissenters = compute_dissenters(results, verdict);
@@ -293,7 +299,7 @@ fn aggregate_single_framework(
             )
         })?;
 
-    let verdict = fr.verdict.clone().to_guard().unwrap_or(Verdict::Flag);
+    let verdict = fr.verdict.to_guard().unwrap_or(Verdict::Flag);
     let dissenters = compute_dissenters(results, verdict);
     Ok((verdict, dissenters))
 }
@@ -316,7 +322,7 @@ fn aggregate_lexical(
         })?;
 
         if fr.verdict != FrameworkVerdict::Undetermined {
-            let verdict = fr.verdict.clone().to_guard().unwrap_or(Verdict::Flag);
+            let verdict = fr.verdict.to_guard().unwrap_or(Verdict::Flag);
             let dissenters = compute_dissenters(results, verdict);
             return Ok((verdict, dissenters));
         }
@@ -331,7 +337,7 @@ fn compute_dissenters(results: &[FrameworkResult], aggregate: Verdict) -> Vec<St
     results
         .iter()
         .filter_map(|r| {
-            let fv = r.verdict.clone().to_guard();
+            let fv = r.verdict.to_guard();
             match fv {
                 Some(v) if v != aggregate => Some(r.name.clone()),
                 None if aggregate != Verdict::Flag => {
@@ -374,7 +380,7 @@ pub fn collect_verdicts(
     // If ousia-guard is available, use it; otherwise fall back to stub verdicts
     // from the scenario file (checking for embedded framework annotations).
     let guard_bin = ousia_guard
-        .map(|p| p.to_path_buf())
+        .map(std::path::Path::to_path_buf)
         .or_else(|| find_on_path("ousia-guard"));
 
     let mut results = Vec::new();
@@ -423,7 +429,7 @@ fn call_ousia_guard(
 
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let verdict = parse_ousia_guard_output(&stdout);
-    let axiom_chain = if explain { Some(stdout.clone()) } else { None };
+    let axiom_chain = if explain { Some(stdout) } else { None };
 
     Ok(FrameworkResult {
         name: framework.to_string(),
@@ -491,10 +497,15 @@ fn find_on_path(bin: &str) -> Option<PathBuf> {
 /// Arguments for the `guard` subcommand.
 #[derive(Debug)]
 pub struct GuardArgs {
+    /// Path to the scenario `ABox` (`.ttl` file).
     pub scenario: PathBuf,
+    /// Aggregation policy string (e.g. `"unanimity"`, `"framework:deontology"`).
     pub policy: String,
+    /// Frameworks to evaluate (default: all built-in).
     pub frameworks: Option<Vec<String>>,
+    /// Explicit path to `ousia-guard` binary.
     pub ousia_guard: Option<PathBuf>,
+    /// Include per-framework axiom chains in the output.
     pub explain: bool,
 }
 
