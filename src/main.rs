@@ -3,9 +3,14 @@
 //! Compiles and validates the `spec-core/` TOML spec (in `ousia-forge` format)
 //! to OWL 2 DL. Framework modules add axioms over this shared vocabulary to
 //! make ethical frameworks commensurable.
+//!
+//! The `compare` subcommand (doxa-compare PRD) fans out N frameworks on one
+//! scenario and emits an agreement/conflict matrix.
 
 #![allow(clippy::print_stderr)] // CLI intentionally writes status to stderr
-#![allow(clippy::print_stdout)] // `doxa list` prints to stdout
+#![allow(clippy::print_stdout)] // `doxa list` / `doxa compare` print to stdout
+
+pub mod compare;
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -22,6 +27,10 @@ struct Cli {
     /// Path to `ousia-forge` binary (default: resolve from `$PATH`).
     #[arg(long, global = true)]
     forge: Option<PathBuf>,
+
+    /// Path to `ousia-reason` binary (default: resolve from `$PATH`).
+    #[arg(long, global = true)]
+    reason: Option<PathBuf>,
 
     #[command(subcommand)]
     command: Commands,
@@ -77,6 +86,27 @@ enum Commands {
         /// Directory containing framework TOML modules (default: `spec-frameworks/`).
         #[arg(long, default_value = "spec-frameworks")]
         frameworks: PathBuf,
+    },
+    /// Compare how an action is evaluated across two or more frameworks.
+    ///
+    /// With `--scenario`: fan-out N frameworks on one scenario and emit an
+    /// agreement/conflict matrix.
+    ///
+    /// Without `--scenario`: print the structural difference (the decisive
+    /// feature each framework uses) independent of any case.
+    Compare {
+        /// Frameworks to compare (e.g. consequentialism deontology virtue-ethics).
+        #[arg(required = true, num_args = 1..)]
+        frameworks: Vec<String>,
+
+        /// Path to the scenario `.ttl` (abox) file.
+        /// Omit for a structural (principle-level) comparison.
+        #[arg(long)]
+        scenario: Option<PathBuf>,
+
+        /// Output format.
+        #[arg(long, default_value = "text", value_parser = ["text", "json"])]
+        format: String,
     },
 }
 
@@ -312,6 +342,38 @@ fn build_single_framework(
     Ok(())
 }
 
+fn cmd_compare(
+    reason_bin: Option<&PathBuf>,
+    frameworks: &[String],
+    scenario: Option<&PathBuf>,
+    format: &str,
+) -> Result<()> {
+    // No-scenario mode: structural comparison only.
+    let Some(scenario_path) = scenario.map(PathBuf::as_path) else {
+        let out = compare::structural_compare(frameworks);
+        print!("{out}");
+        return Ok(());
+    };
+
+    let scenario_label = scenario_path.to_string_lossy().into_owned();
+
+    // Fan-out: run ousia-reason for each framework on the scenario.
+    let mut verdicts = std::collections::BTreeMap::new();
+    for fw in frameworks {
+        let v = compare::reason_one(reason_bin.map(PathBuf::as_path), fw, scenario_path)?;
+        verdicts.insert(fw.clone(), v);
+    }
+
+    let result = compare::CompareResult::from_verdicts(Some(scenario_label), verdicts);
+
+    match format {
+        "json" => println!("{}", compare::to_json(&result)),
+        _ => print!("{}", compare::to_text(&result)),
+    }
+
+    Ok(())
+}
+
 fn main() -> std::process::ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
@@ -325,6 +387,11 @@ fn main() -> std::process::ExitCode {
             spec,
             frameworks,
         } => cmd_build(cli.forge, framework, all, out, &spec, &frameworks),
+        Commands::Compare {
+            frameworks,
+            scenario,
+            format,
+        } => cmd_compare(cli.reason.as_ref(), &frameworks, scenario.as_ref(), &format),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
