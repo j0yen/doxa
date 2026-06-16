@@ -1,0 +1,53 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix doxa: <https://w3id.org/doxa#> .
+@prefix sc:   <https://w3id.org/doxa/scenario/trolley#> .
+
+# ============================================================================
+# Trolley Problem — ABox scenario
+#
+# A runaway trolley is heading toward five people who cannot escape.
+# A bystander can divert it to a side track, where one person stands.
+# The divert action saves five lives but causes the death of one.
+#
+# This is the classic case where Consequentialism and Deontology diverge:
+#   - Consequentialism: RightAction (maximises wellbeing; net 4 lives saved)
+#   - Deontology:       WrongAction (uses the one person as a mere means)
+#   - Virtue-ethics:    PermissibleAction (courageous, compassionate choice)
+# ============================================================================
+
+sc:divert
+    rdf:type owl:NamedIndividual ;
+    rdf:type doxa:Action ;
+    rdfs:label "Divert the trolley" ;
+    doxa:hasAgent sc:bystander ;
+    doxa:hasConsequence sc:fiveSaved ;
+    doxa:hasConsequence sc:oneDied ;
+    doxa:instantiatesMaxim sc:saveTheMostLives ;
+    doxa:intendedOutcome sc:wellbeingMaximised .
+
+sc:bystander
+    rdf:type owl:NamedIndividual ;
+    rdfs:label "Bystander at the lever" .
+
+sc:fiveSaved
+    rdf:type owl:NamedIndividual ;
+    rdf:type doxa:Wellbeing ;
+    rdfs:label "Five lives saved" .
+
+sc:oneDied
+    rdf:type owl:NamedIndividual ;
+    rdf:type doxa:Harm ;
+    rdfs:label "One life lost" .
+
+sc:saveTheMostLives
+    rdf:type owl:NamedIndividual ;
+    rdf:type doxa:Maxim ;
+    rdfs:label "Act so as to save the greatest number of lives" .
+
+sc:wellbeingMaximised
+    rdf:type owl:NamedIndividual ;
+    rdf:type doxa:Wellbeing ;
+    rdfs:label "Net wellbeing maximised (four additional lives)" .

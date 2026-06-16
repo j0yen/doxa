@@ -5,7 +5,7 @@
 //! make ethical frameworks commensurable.
 
 #![allow(clippy::print_stderr)] // CLI intentionally writes status to stderr
-#![allow(clippy::print_stdout)] // `doxa list` prints to stdout
+#![allow(clippy::print_stdout)] // `doxa list` and `doxa reason` print to stdout
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -14,6 +14,8 @@ use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 
 use doxa::{build_framework_owlxml, list_frameworks, parse_framework, parse_spec_dir};
+
+pub(crate) mod reason;
 
 /// doxa — framework-neutral moral `TBox` for ethical reasoning.
 #[derive(Parser)]
@@ -69,6 +71,37 @@ enum Commands {
         /// Output OWL file path (ignored when `--all` is used).
         #[arg(long)]
         out: Option<PathBuf>,
+
+        /// Directory containing the core TOML spec (default: `spec-core/`).
+        #[arg(long, default_value = "spec-core")]
+        spec: PathBuf,
+
+        /// Directory containing framework TOML modules (default: `spec-frameworks/`).
+        #[arg(long, default_value = "spec-frameworks")]
+        frameworks: PathBuf,
+    },
+    /// Evaluate a scenario `ABox` against a framework's `TBox` via `ousia-reason`.
+    ///
+    /// Prints: `<framework>: <action-IRI> is <RightAction|WrongAction|PermissibleAction|undetermined>`
+    Reason {
+        /// Framework name (e.g. `consequentialism`, `deontology`, `virtue-ethics`).
+        framework: String,
+
+        /// Scenario `ABox` Turtle file (e.g. `scenarios/trolley.ttl`).
+        #[arg(long)]
+        scenario: PathBuf,
+
+        /// IRI of the action individual to evaluate.
+        #[arg(long, default_value = "https://w3id.org/doxa/scenario/trolley#divert")]
+        action: String,
+
+        /// Also print the ordered axiom justification chain for the verdict.
+        #[arg(long)]
+        explain: bool,
+
+        /// Path to `ousia-reason` binary (default: resolve from `$PATH`).
+        #[arg(long)]
+        reasoner: Option<PathBuf>,
 
         /// Directory containing the core TOML spec (default: `spec-core/`).
         #[arg(long, default_value = "spec-core")]
@@ -312,6 +345,93 @@ fn build_single_framework(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
+fn cmd_reason(
+    forge_path: Option<PathBuf>,
+    framework_name: &str,
+    scenario: &Path,
+    action_iri: &str,
+    explain: bool,
+    reasoner_flag: Option<&PathBuf>,
+    spec_dir: &Path,
+    frameworks_dir: &Path,
+) -> Result<()> {
+    // Validate inputs
+    if !scenario.is_file() {
+        return Err(anyhow!(
+            "scenario file not found: {}. \
+             Create it or pass --scenario <path> to an existing Turtle file.",
+            scenario.display()
+        ));
+    }
+
+    // Build the framework OWL into a temp file
+    let spec = parse_spec_dir(spec_dir)
+        .with_context(|| format!("failed to parse spec-core at {}", spec_dir.display()))?;
+    let fw_path = frameworks_dir.join(format!("{framework_name}.toml"));
+    if !fw_path.is_file() {
+        return Err(anyhow!(
+            "framework '{framework_name}' not found at {}. \
+             Use `doxa list` to see available frameworks.",
+            fw_path.display()
+        ));
+    }
+    let framework = parse_framework(&fw_path)?;
+
+    // Write framework OWL to a temp file
+    let owl_xml = build_framework_owlxml(&spec, &framework);
+    let tmp_dir = std::env::temp_dir();
+    let owl_tmp = tmp_dir.join(format!("doxa-{framework_name}.owl"));
+    std::fs::write(&owl_tmp, &owl_xml)
+        .with_context(|| format!("failed to write temp OWL to {}", owl_tmp.display()))?;
+
+    // Combine TBox + ABox
+    let combined = reason::combine_ontology(&owl_tmp, scenario)
+        .with_context(|| "failed to combine framework TBox with scenario ABox")?;
+    let combined_tmp = tmp_dir.join("doxa-combined.ttl");
+    std::fs::write(&combined_tmp, &combined)
+        .with_context(|| format!("failed to write combined Turtle to {}", combined_tmp.display()))?;
+
+    // Try to resolve ousia-reason; if absent, skip live reasoning per AC2
+    let reasoner = match reason::resolve_reasoner(reasoner_flag) {
+        Ok(r) => Some(r),
+        Err(e) => {
+            eprintln!("note: skipping live reasoning — {e}");
+            None
+        }
+    };
+
+    // Also build via doxa-build if forge present (best effort, non-fatal)
+    let _ = resolve_forge(forge_path);
+
+    let verdict = if let Some(ref r) = reasoner {
+        let classify_out = reason::run_classify(r, &combined_tmp)?;
+        reason::parse_verdict(&classify_out, action_iri)
+    } else {
+        // ousia-reason absent: emit undetermined (AC2 — no fabricated verdict)
+        reason::Verdict::Undetermined
+    };
+
+    // Print result
+    println!("{framework_name}: <{action_iri}> is {verdict}");
+
+    // --explain
+    if explain {
+        if let Some(ref r) = reasoner {
+            if verdict == reason::Verdict::Undetermined {
+                println!("\n(no explanation available — verdict is undetermined)");
+            } else {
+                let chain = reason::run_explain(r, &combined_tmp, action_iri)?;
+                println!("\nJustification chain:\n{chain}");
+            }
+        } else {
+            println!("\n(ousia-reason not available — cannot produce explanation chain)");
+        }
+    }
+
+    Ok(())
+}
+
 fn main() -> std::process::ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
@@ -325,6 +445,24 @@ fn main() -> std::process::ExitCode {
             spec,
             frameworks,
         } => cmd_build(cli.forge, framework, all, out, &spec, &frameworks),
+        Commands::Reason {
+            framework,
+            scenario,
+            action,
+            explain,
+            reasoner,
+            spec,
+            frameworks,
+        } => cmd_reason(
+            cli.forge,
+            &framework,
+            &scenario,
+            &action,
+            explain,
+            reasoner.as_ref(),
+            &spec,
+            &frameworks,
+        ),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,
