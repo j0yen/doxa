@@ -53,8 +53,9 @@ fn acceptance_ac4_class_and_property_counts() {
 
     let stdout = String::from_utf8_lossy(&stats_output.stdout);
     // Parse "Classes: N" and "Object properties: N" lines.
-    let class_count = parse_stat_line(&stdout, "Classes");
-    let prop_count = parse_stat_line(&stdout, "Object properties");
+    // ousia-forge stats outputs "named-classes: N" and "object-properties: N"
+    let class_count = parse_stat_line(&stdout, "named-classes");
+    let prop_count = parse_stat_line(&stdout, "object-properties");
     assert!(
         class_count >= 12,
         "core OWL must contain ≥12 classes; ousia-forge stats reported {class_count}\nstats output:\n{stdout}"

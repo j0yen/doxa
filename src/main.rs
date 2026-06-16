@@ -1,16 +1,18 @@
-//! doxa — framework-neutral moral TBox compiler.
+//! doxa — framework-neutral moral `TBox` compiler.
 //!
 //! Compiles and validates the `spec-core/` TOML spec (in `ousia-forge` format)
 //! to OWL 2 DL. Framework modules (next PRD) add axioms over this shared
 //! vocabulary to make ethical frameworks commensurable.
 
-use std::path::PathBuf;
+#![allow(clippy::print_stderr)] // CLI intentionally writes status to stderr
+
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
 
-/// doxa — framework-neutral moral TBox for ethical reasoning.
+/// doxa — framework-neutral moral `TBox` for ethical reasoning.
 #[derive(Parser)]
 #[command(name = "doxa", version, about)]
 struct Cli {
@@ -71,7 +73,7 @@ fn which_forge() -> Result<PathBuf> {
     ))
 }
 
-fn run_forge(forge: &PathBuf, args: &[&str]) -> Result<()> {
+fn run_forge(forge: &Path, args: &[&str]) -> Result<()> {
     let status = Command::new(forge)
         .args(args)
         .status()
@@ -86,7 +88,7 @@ fn run_forge(forge: &PathBuf, args: &[&str]) -> Result<()> {
     }
 }
 
-fn cmd_build_core(forge_path: Option<PathBuf>, out: PathBuf, spec: PathBuf) -> Result<()> {
+fn cmd_build_core(forge_path: Option<PathBuf>, out: &Path, spec: &Path) -> Result<()> {
     if !spec.is_dir() {
         return Err(anyhow!(
             "spec directory not found: {}. \
@@ -119,7 +121,7 @@ fn cmd_build_core(forge_path: Option<PathBuf>, out: PathBuf, spec: PathBuf) -> R
     Ok(())
 }
 
-fn cmd_check_core(forge_path: Option<PathBuf>, spec: PathBuf) -> Result<()> {
+fn cmd_check_core(forge_path: Option<PathBuf>, spec: &Path) -> Result<()> {
     if !spec.is_dir() {
         return Err(anyhow!(
             "spec directory not found: {}",
@@ -135,8 +137,8 @@ fn cmd_check_core(forge_path: Option<PathBuf>, spec: PathBuf) -> Result<()> {
 fn main() -> std::process::ExitCode {
     let cli = Cli::parse();
     let result = match cli.command {
-        Commands::BuildCore { out, spec } => cmd_build_core(cli.forge, out, spec),
-        Commands::CheckCore { spec } => cmd_check_core(cli.forge, spec),
+        Commands::BuildCore { out, spec } => cmd_build_core(cli.forge, &out, &spec),
+        Commands::CheckCore { spec } => cmd_check_core(cli.forge, &spec),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,

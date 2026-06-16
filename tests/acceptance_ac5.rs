@@ -68,10 +68,12 @@ fn acceptance_ac5_no_equivalence_axiom_in_core() {
 
 fn owl_has_equivalence_for(owl: &str, class_local_name: &str) -> bool {
     // OWL/XML encodes EquivalentClasses as <EquivalentClasses> containing the class IRI.
-    // We check for a block that contains both "EquivalentClasses" and the class name.
+    // Only match on actual XML element open tags, not annotation literal text.
     let mut inside_equiv = false;
     for line in owl.lines() {
-        if line.contains("EquivalentClasses") {
+        let trimmed = line.trim();
+        // Only enter equiv block on the actual XML tag, not on text inside a <Literal>
+        if trimmed.starts_with("<EquivalentClasses>") || trimmed == "<EquivalentClasses>" {
             inside_equiv = true;
         }
         if inside_equiv && line.contains(class_local_name) {
